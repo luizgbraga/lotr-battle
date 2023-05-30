@@ -4,6 +4,7 @@
 #include <vector>
 #include <random>
 #include <ctime>
+#include <algorithm>
 
 class Probabilidades {
     private:
@@ -52,19 +53,23 @@ class Soldado {
         double bonusAtaque;
         Probabilidades p;
         bool dead;
+        int waitList;
     public:
         // Construtor
         Soldado(std::string nome, double saude, double poderAtaque, double bonusAtaque) 
             : nome(nome), saude(saude), poderAtaque(poderAtaque), bonusAtaque(bonusAtaque) {
                 this->dead = false;
+                this->waitList = 0;
             };
         
         // Getters
         std::string getNome() const { return this->nome; }
         double getPoderAtaque() const { return this->poderAtaque; }
+        int getWaitList() const { return this->waitList; }
 
         // Setters
         void setProbabilities(Probabilidades& p) { this->p = p; }
+        void resetWaitList() { this->waitList = 0; }
 
         // Outros métodos
         double generatePower(double power) {
@@ -73,26 +78,32 @@ class Soldado {
             return dist(gen);
         }
         virtual void defender(double ataqueSofrido, Soldado& attacker) {
-            if(1 + (rand() % 100) > this->p.getPDesvio()) {
-                this->saude -= ataqueSofrido * (1 - 0.5 * ((rand() % 100) < this->p.getPBloqueio()));
+            if((double)(rand() % 100)/100 > this->p.getPDesvio()) {
+                double damage = ataqueSofrido * (1 - 0.5 * ((double)(rand() % 100)/100 < this->p.getPBloqueio()));
+                this->saude -= damage;
+                std::cout << "Ouch! -" << damage << std::endl;
+            } else {
+                std::cout << "Desvio!" << std::endl;
             }
             if(this->saude <= 0) {
                 this->dead = true;
             } else {
-                if(1 + (rand() % 100) < this->p.getPContraAtaque()) {
+                if((double)(rand() % 100)/100 < this->p.getPContraAtaque()) {
                     this->atacar(attacker);
                 }
             }
         }
         virtual void atacar(Soldado& other) {
-            if(1 + (rand() % 100) < this->p.getPAcertar()) {
-                other.defender(this->poderAtaque * (1 + this->bonusAtaque * (1 + (rand() % 100) <= this->p.getPBonus())), *this);
-                if(1 + (rand() % 100) <= this->p.getPDuplo()) {
-                    other.defender(this->poderAtaque * (1 + this->bonusAtaque * (1 + (rand() % 100) <= this->p.getPBonus())), *this);
+            std::cout << this->getNome() << " ataca " << other.getNome() << std::endl;
+            if((double)(rand() % 100)/100 < this->p.getPAcertar()) {
+                other.defender(this->poderAtaque * (this->bonusAtaque * ((double)(rand() % 100)/100 <= this->p.getPBonus())), *this);
+                if((double)(rand() % 100)/100 <= this->p.getPDuplo()) {
+                    other.defender(this->poderAtaque * (this->bonusAtaque * ((double)(rand() % 100)/100 <= this->p.getPBonus())), *this);
                 }
             }
         } 
         bool isDead() { return this->dead; }
+        void incrementWaitList() { this->waitList++; }
 };
 
 class Elfo : public Soldado {
@@ -178,6 +189,154 @@ class Troll : public Soldado {
             };
 };
 
+bool compareSoldados(const Soldado& s1, const Soldado& s2) {
+    return s1.getWaitList() > s2.getWaitList();
+}
+
+class Battle {
+    private:
+        std::vector<Soldado> eBem;
+        std::vector<Soldado> eMal;
+    public:
+        Battle() {
+            this->eBem = {};
+            this->eMal = {};
+        };
+        Battle& addBem(Soldado &sBem) {
+            eBem.push_back(sBem);
+            return *this;
+        }
+        Battle &addMal(Soldado &sMal) {
+            eMal.push_back(sMal);
+            return *this;
+        }
+        bool ended() const { 
+            return (eBem.size() * eMal.size() == 0); 
+        }
+        void shuffle() { 
+            std::random_shuffle(this->eBem.begin(), this->eBem.end());
+            std::random_shuffle(this->eMal.begin(), this->eMal.end());   
+        }
+        void sort() {
+            std::sort(this->eBem.begin(), this->eBem.end(), compareSoldados);
+            std::sort(this->eMal.begin(), this->eMal.end(), compareSoldados);
+        }
+        void round(int r) {
+            this->shuffle();
+            this->sort();
+            int i = 0;
+            std::cout << std::endl << "********** Round " << r << " ***********" << std::endl << std::endl;
+            while(i < eBem.size() && i < eMal.size()) {
+                eBem[i].atacar(eMal[i]);
+                if(!eMal[i].isDead() && !eBem[i].isDead()) {
+                    eMal[i].atacar(eBem[i]);
+                }
+                if(eBem[i].isDead()) {
+                    eBem.erase(eBem.begin() + i);
+                } else {
+                    eBem[i].resetWaitList();
+                }
+                if(eMal[i].isDead()) {
+                    eMal.erase(eMal.begin() + i);
+                } else {
+                    eMal[i].resetWaitList();
+                }
+                i++;
+            }
+            if(i < eBem.size()) {
+                eBem[i].incrementWaitList();
+                i++;
+            }
+            if(i < eMal.size()) {
+                eMal[i].incrementWaitList();
+                i++;
+            }
+        }
+        void battle() {
+            int r = 0;
+            while(!this->ended()) {
+                this->round(r++);
+                char next = 'A';
+                while(next != 'C') {
+                    std::cout << "Aperte C para continuar: ";
+                    std::cin >> next;
+                }
+            }
+            if(eBem.size()) {
+                std::cout << "O Bem venceu!" << std::endl;
+            } 
+            if(eMal.size()) {
+                std::cout << "O Mal venceu!" << std::endl;
+            }
+        }
+};
+
 int main() {
     srand(time(0));
+
+    Battle b;
+
+    Elfo e1("Elfo 1", 30, 2);
+    Elfo e2("Elfo 2", 32, 1);
+    // Elfo e3("Elfo 3", 30, 3);
+    // Elfo e4("Elfo 4", 28, 2);
+    // Elfo e5("Elfo 5", 36, 2);
+    b.addBem(e1).addBem(e2);
+    //.addBem(e3).addBem(e4).addBem(e5);
+
+    Anao a1("Anao 1", 20, 1);
+    Anao a2("Anao 2", 22, 1);
+    Anao a3("Anao 3", 18, 2);
+    // Anao a4("Anao 4", 28, 1);
+    // Anao a5("Anao 5", 24, 2);
+    b.addBem(a1).addBem(a2).addBem(a3);
+    //.addBem(a4).addBem(a5);
+
+    Humano h1("Humano 1", 50, 5);
+    Humano h2("Humano 2", 42, 4);
+    // Humano h3("Humano 3", 50, 8);
+    // Humano h4("Humano 4", 48, 10);
+    // Humano h5("Humano 5", 56, 8);
+    b.addBem(h1).addBem(h2);
+    //addBem(h3).addBem(h4).addBem(h5);
+
+    Mago m1("Mago 1", 100, 10);
+    b.addBem(m1);
+
+    Legolas l1("Legolas 1", 80, 18);
+    b.addBem(l1);
+
+    Troll t1("Troll 1", 25, 2);
+    Troll t2("Troll 2", 22, 3);
+    Troll t3("Troll 3", 18, 2);
+    Troll t4("Troll 4", 28, 1);
+    Troll t5("Troll 5", 24, 2);
+    // Troll t6("Troll 6", 20, 4);
+    // Troll t7("Troll 7", 22, 1);
+    // Troll t8("Troll 8", 18, 2);
+    // Troll t9("Troll 9", 28, 1);
+    // Troll t10("Troll 10", 24, 2);
+    b.addMal(t1).addMal(t2).addMal(t3).addMal(t4).addMal(t5);
+    //addMal(t6).addMal(t7).addMal(t8).addMal(t9).addMal(t10);
+
+    Orc o1("Orc 1", 15, 2);
+    Orc o2("Orc 2", 12, 3);
+    // Orc o3("Orc 3", 18, 2);
+    // Orc o4("Orc 4", 20, 6);
+    // Orc o5("Orc 5", 14, 2);
+    // Orc o6("Orc 6", 16, 4);
+    // Orc o7("Orc 7", 22, 8);
+    // Orc o8("Orc 8", 18, 2);
+    b.addMal(o1).addMal(o2);
+    //addMal(o3).addMal(o4).addMal(o5).addMal(o6).addMal(o7).addMal(o8);
+
+    Sauron s1("Sauron 1", 200, 20);
+    b.addMal(s1);
+
+    Gollum g1("Gollum 1", 50, 90);
+    b.addMal(g1);
+
+    b.battle();
+
+    return 0;
 }
