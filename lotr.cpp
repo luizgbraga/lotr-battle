@@ -5,7 +5,9 @@
 #include <random>
 #include <ctime>
 #include <algorithm>
+#include<cmath>
 
+// Controls probabilities of each character, and makes it confident or afraid by increasing and decreasing some probabilities
 class Probabilidades {
     private:
         double pAcertar;
@@ -77,6 +79,18 @@ class Soldado {
         std::string getNome() const { return this->nome; }
         double getPoderAtaque() const { return this->poderAtaque; }
         int getWaitList() const { return this->waitList; }
+        std::string getFullName() const {
+            std::string fullName = this->nome;
+            if(this->p.getConfident()) {
+                fullName += "++";
+            } else if(this->p.getAfraid()) {
+                fullName += "--";
+            }
+            fullName += " [";
+            fullName += std::to_string(int(this->saude));
+            fullName += "]";
+            return fullName;
+        }
 
         // Setters
         void setProbabilities(Probabilidades& p) { this->p = p; }
@@ -100,33 +114,26 @@ class Soldado {
                 std::cout << "Desvio!" << std::endl;
             }
             if(this->saude <= 0) {
+                std::cout << this->getNome() << " morreu... RIP" << std::endl;
                 this->dead = true;
             } else {
                 if((double)(rand() % 100)/100 < this->p.getPContraAtaque()) {
+                    std::cout << "Contra ataque!" << std::endl;
                     this->atacar(attacker);
                 }
             }
         }
         virtual void atacar(Soldado& other) {
-            std::cout << this->getNome();
-            if(this->p.getConfident()) {
-                std::cout << "++";
-            } else if(this->p.getAfraid()) {
-                std::cout << "--";
-            }
-            std::cout << " ataca " << other.getNome();
-            if(other.p.getConfident()) {
-                std::cout << "++";
-            } else if(other.p.getAfraid()) {
-                std::cout << "--";
-            }
-            std::cout << std::endl;
+            std::cout << this->getFullName() << " ataca " << other.getFullName() << std::endl;
             if((double)(rand() % 100)/100 < this->p.getPAcertar()) {
-                other.defender(this->poderAtaque * (this->bonusAtaque * ((double)(rand() % 100)/100 <= this->p.getPBonus())), *this);
-                if((double)(rand() % 100)/100 <= this->p.getPDuplo()) {
-                    other.defender(this->poderAtaque * (this->bonusAtaque * ((double)(rand() % 100)/100 <= this->p.getPBonus())), *this);
+                other.defender(this->poderAtaque * (1 + this->bonusAtaque * ((double)(rand() % 100)/100 <= this->p.getPBonus())), *this);
+                if((double)(rand() % 100)/100 <= this->p.getPDuplo() && !other.isDead()) {
+                    std::cout << this->getFullName() << " ataca duplo!" << std::endl;
+                    other.defender(this->poderAtaque * (1 + this->bonusAtaque * ((double)(rand() % 100)/100 <= this->p.getPBonus())), *this);
                     this->p.beConfident();
                 }
+            } else {
+                std::cout << "Errou o ataque!" << std::endl;
             }
         } 
         bool isDead() { return this->dead; }
@@ -305,27 +312,18 @@ int main() {
 
     Elfo e1("Elfo 1", 30, 10);
     Elfo e2("Elfo 2", 32, 12);
-    // Elfo e3("Elfo 3", 30, 3);
-    // Elfo e4("Elfo 4", 28, 2);
-    // Elfo e5("Elfo 5", 36, 2);
     b.addBem(e1).addBem(e2);
-    //.addBem(e3).addBem(e4).addBem(e5);
 
     Anao a1("Anao 1", 20, 8);
     Anao a2("Anao 2", 22, 10);
     Anao a3("Anao 3", 18, 10);
-    // Anao a4("Anao 4", 28, 1);
-    // Anao a5("Anao 5", 24, 2);
     b.addBem(a1).addBem(a2).addBem(a3);
-    //.addBem(a4).addBem(a5);
 
     Humano h1("Humano 1", 50, 25);
     Humano h2("Humano 2", 42, 30);
-    // Humano h3("Humano 3", 50, 8);
-    // Humano h4("Humano 4", 48, 10);
-    // Humano h5("Humano 5", 56, 8);
-    b.addBem(h1).addBem(h2);
-    //addBem(h3).addBem(h4).addBem(h5);
+    Humano h3("Humano 3", 50, 8);
+    Humano h4("Humano 4", 48, 10);
+    b.addBem(h1).addBem(h2).addBem(h3).addBem(h4);
 
     Mago m1("Mago 1", 100, 60);
     b.addBem(m1);
@@ -338,26 +336,16 @@ int main() {
     Troll t3("Troll 3", 18, 6);
     Troll t4("Troll 4", 28, 10);
     Troll t5("Troll 5", 24, 12);
-    // Troll t6("Troll 6", 20, 4);
-    // Troll t7("Troll 7", 22, 1);
-    // Troll t8("Troll 8", 18, 2);
-    // Troll t9("Troll 9", 28, 1);
-    // Troll t10("Troll 10", 24, 2);
     b.addMal(t1).addMal(t2).addMal(t3).addMal(t4).addMal(t5);
-    //addMal(t6).addMal(t7).addMal(t8).addMal(t9).addMal(t10);
 
     Orc o1("Orc 1", 15, 10);
     Orc o2("Orc 2", 12, 4);
-    // Orc o3("Orc 3", 18, 2);
-    // Orc o4("Orc 4", 20, 6);
-    // Orc o5("Orc 5", 14, 2);
-    // Orc o6("Orc 6", 16, 4);
-    // Orc o7("Orc 7", 22, 8);
-    // Orc o8("Orc 8", 18, 2);
-    b.addMal(o1).addMal(o2);
-    //addMal(o3).addMal(o4).addMal(o5).addMal(o6).addMal(o7).addMal(o8);
+    Orc o3("Orc 3", 18, 2);
+    Orc o4("Orc 4", 20, 6);
+    Orc o5("Orc 5", 14, 2);
+    b.addMal(o1).addMal(o2).addMal(o3).addMal(o4).addMal(o5);
 
-    Sauron s1("Sauron 1", 200, 80);
+    Sauron s1("Sauron 1", 130, 70);
     b.addMal(s1);
 
     Gollum g1("Gollum 1", 50, 90);
