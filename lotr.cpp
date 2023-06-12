@@ -14,6 +14,8 @@ class Probabilidades {
         double pDesvio;
         double pContraAtaque;
         double pBloqueio;
+        bool afraid;
+        bool confident;
     public:
         Probabilidades() {
             this->pAcertar = 0.6;
@@ -24,7 +26,10 @@ class Probabilidades {
             this->pBloqueio = 0.1;
         }
         Probabilidades(double pAcertar, double pDuplo, double pBonus, double pDesvio, double pContraAtaque, double pBloqueio) 
-            : pAcertar(pAcertar), pDuplo(pDuplo), pBonus(pBonus), pDesvio(pDesvio), pContraAtaque(pContraAtaque), pBloqueio(pBloqueio) {};
+            : pAcertar(pAcertar), pDuplo(pDuplo), pBonus(pBonus), pDesvio(pDesvio), pContraAtaque(pContraAtaque), pBloqueio(pBloqueio) {
+                this->afraid = false;
+                this->confident = false;
+            };
         
         double getPAcertar() const { return this->pAcertar; }
         double getPDuplo() const { return this->pDuplo; }
@@ -32,16 +37,22 @@ class Probabilidades {
         double getPDesvio() const { return this->pDesvio; }
         double getPContraAtaque() const { return this->pContraAtaque; }
         double getPBloqueio() const { return this->pBloqueio; }
+        bool getConfident() const { return this->confident; }
+        bool getAfraid() const { return this->afraid; }
         
         void beConfident() {
             this->pAcertar += (1 - this->pAcertar)/2;
             this->pDesvio += (1 - this->pDesvio)/4;
             this->pContraAtaque += (1 - this->pContraAtaque)/6;
+            this->confident = true;
+            this->afraid = false;
         }
         void beAfraid() {
             this->pAcertar -= this->pAcertar/5;
             this->pDesvio -= this->pDesvio/8;
             this->pContraAtaque = 0;
+            this->afraid = true;
+            this->confident = false;
         }
 };
 
@@ -82,6 +93,9 @@ class Soldado {
                 double damage = ataqueSofrido * (1 - 0.5 * ((double)(rand() % 100)/100 < this->p.getPBloqueio()));
                 this->saude -= damage;
                 std::cout << "Ouch! -" << damage << std::endl;
+                if(damage > this->saude/2) {
+                    this->p.beAfraid();
+                }
             } else {
                 std::cout << "Desvio!" << std::endl;
             }
@@ -94,11 +108,24 @@ class Soldado {
             }
         }
         virtual void atacar(Soldado& other) {
-            std::cout << this->getNome() << " ataca " << other.getNome() << std::endl;
+            std::cout << this->getNome();
+            if(this->p.getConfident()) {
+                std::cout << "++";
+            } else if(this->p.getAfraid()) {
+                std::cout << "--";
+            }
+            std::cout << " ataca " << other.getNome();
+            if(other.p.getConfident()) {
+                std::cout << "++";
+            } else if(other.p.getAfraid()) {
+                std::cout << "--";
+            }
+            std::cout << std::endl;
             if((double)(rand() % 100)/100 < this->p.getPAcertar()) {
                 other.defender(this->poderAtaque * (this->bonusAtaque * ((double)(rand() % 100)/100 <= this->p.getPBonus())), *this);
                 if((double)(rand() % 100)/100 <= this->p.getPDuplo()) {
                     other.defender(this->poderAtaque * (this->bonusAtaque * ((double)(rand() % 100)/100 <= this->p.getPBonus())), *this);
+                    this->p.beConfident();
                 }
             }
         } 
@@ -276,41 +303,41 @@ int main() {
 
     Battle b;
 
-    Elfo e1("Elfo 1", 30, 2);
-    Elfo e2("Elfo 2", 32, 1);
+    Elfo e1("Elfo 1", 30, 10);
+    Elfo e2("Elfo 2", 32, 12);
     // Elfo e3("Elfo 3", 30, 3);
     // Elfo e4("Elfo 4", 28, 2);
     // Elfo e5("Elfo 5", 36, 2);
     b.addBem(e1).addBem(e2);
     //.addBem(e3).addBem(e4).addBem(e5);
 
-    Anao a1("Anao 1", 20, 1);
-    Anao a2("Anao 2", 22, 1);
-    Anao a3("Anao 3", 18, 2);
+    Anao a1("Anao 1", 20, 8);
+    Anao a2("Anao 2", 22, 10);
+    Anao a3("Anao 3", 18, 10);
     // Anao a4("Anao 4", 28, 1);
     // Anao a5("Anao 5", 24, 2);
     b.addBem(a1).addBem(a2).addBem(a3);
     //.addBem(a4).addBem(a5);
 
-    Humano h1("Humano 1", 50, 5);
-    Humano h2("Humano 2", 42, 4);
+    Humano h1("Humano 1", 50, 25);
+    Humano h2("Humano 2", 42, 30);
     // Humano h3("Humano 3", 50, 8);
     // Humano h4("Humano 4", 48, 10);
     // Humano h5("Humano 5", 56, 8);
     b.addBem(h1).addBem(h2);
     //addBem(h3).addBem(h4).addBem(h5);
 
-    Mago m1("Mago 1", 100, 10);
+    Mago m1("Mago 1", 100, 60);
     b.addBem(m1);
 
-    Legolas l1("Legolas 1", 80, 18);
+    Legolas l1("Legolas 1", 80, 58);
     b.addBem(l1);
 
-    Troll t1("Troll 1", 25, 2);
-    Troll t2("Troll 2", 22, 3);
-    Troll t3("Troll 3", 18, 2);
-    Troll t4("Troll 4", 28, 1);
-    Troll t5("Troll 5", 24, 2);
+    Troll t1("Troll 1", 25, 10);
+    Troll t2("Troll 2", 22, 8);
+    Troll t3("Troll 3", 18, 6);
+    Troll t4("Troll 4", 28, 10);
+    Troll t5("Troll 5", 24, 12);
     // Troll t6("Troll 6", 20, 4);
     // Troll t7("Troll 7", 22, 1);
     // Troll t8("Troll 8", 18, 2);
@@ -319,8 +346,8 @@ int main() {
     b.addMal(t1).addMal(t2).addMal(t3).addMal(t4).addMal(t5);
     //addMal(t6).addMal(t7).addMal(t8).addMal(t9).addMal(t10);
 
-    Orc o1("Orc 1", 15, 2);
-    Orc o2("Orc 2", 12, 3);
+    Orc o1("Orc 1", 15, 10);
+    Orc o2("Orc 2", 12, 4);
     // Orc o3("Orc 3", 18, 2);
     // Orc o4("Orc 4", 20, 6);
     // Orc o5("Orc 5", 14, 2);
@@ -330,7 +357,7 @@ int main() {
     b.addMal(o1).addMal(o2);
     //addMal(o3).addMal(o4).addMal(o5).addMal(o6).addMal(o7).addMal(o8);
 
-    Sauron s1("Sauron 1", 200, 20);
+    Sauron s1("Sauron 1", 200, 80);
     b.addMal(s1);
 
     Gollum g1("Gollum 1", 50, 90);
