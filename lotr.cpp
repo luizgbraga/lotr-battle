@@ -105,11 +105,11 @@ class Soldado {
         virtual void defender(double ataqueSofrido, Soldado& attacker) {
             if((double)(rand() % 100)/100 > this->p.getPDesvio()) {
                 double damage = ataqueSofrido * (1 - 0.5 * ((double)(rand() % 100)/100 < this->p.getPBloqueio()));
-                this->saude -= damage;
-                std::cout << "Ouch! -" << damage << std::endl;
                 if(damage > this->saude/2) {
                     this->p.beAfraid();
                 }
+                this->saude -= damage;
+                std::cout << "Ouch! -" << damage << std::endl;
             } else {
                 std::cout << "Desvio!" << std::endl;
             }
