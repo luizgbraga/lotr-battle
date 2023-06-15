@@ -259,6 +259,7 @@ class Battle {
             this->shuffle();
             this->sort();
             int i = 0;
+            std::vector<int> mustEraseBem, mustEraseMal;
             std::cout << std::endl << "********** Round " << r << " ***********" << std::endl << std::endl;
             while(i < eBem.size() && i < eMal.size()) {
                 eBem[i].atacar(eMal[i]);
@@ -266,12 +267,12 @@ class Battle {
                     eMal[i].atacar(eBem[i]);
                 }
                 if(eBem[i].isDead()) {
-                    eBem.erase(eBem.begin() + i);
+                    mustEraseBem.push_back(i);
                 } else {
                     eBem[i].resetWaitList();
                 }
                 if(eMal[i].isDead()) {
-                    eMal.erase(eMal.begin() + i);
+                    mustEraseMal.push_back(i);
                 } else {
                     eMal[i].resetWaitList();
                 }
@@ -284,6 +285,12 @@ class Battle {
             if(i < eMal.size()) {
                 eMal[i].incrementWaitList();
                 i++;
+            }
+            for(int index : mustEraseBem) {
+                eBem.erase(eBem.begin() + index);
+            }
+            for(int index : mustEraseMal) {
+                eMal.erase(eMal.begin() + index);
             }
         }
         void battle() {
