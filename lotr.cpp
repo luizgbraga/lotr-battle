@@ -286,6 +286,8 @@ class Battle {
                 eMal[i].incrementWaitList();
                 i++;
             }
+            std::sort(mustEraseBem.rbegin(), mustEraseBem.rend());
+            std::sort(mustEraseMal.rbegin(), mustEraseMal.rend());
             for(int index : mustEraseBem) {
                 eBem.erase(eBem.begin() + index);
             }
@@ -349,8 +351,7 @@ int main() {
     Orc o2("Orc 2", 12, 4);
     Orc o3("Orc 3", 18, 2);
     Orc o4("Orc 4", 20, 6);
-    Orc o5("Orc 5", 14, 2);
-    b.addMal(o1).addMal(o2).addMal(o3).addMal(o4).addMal(o5);
+    b.addMal(o1).addMal(o2).addMal(o3).addMal(o4);
 
     Sauron s1("Sauron 1", 130, 70);
     b.addMal(s1);
