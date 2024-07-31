@@ -81,9 +81,9 @@ class Soldado {
         int getWaitList() const { return this->waitList; }
         std::string getFullName() const {
             std::string fullName = this->nome;
-            if(this->p.getConfident()) {
+            if (this->p.getConfident()) {
                 fullName += "++";
-            } else if(this->p.getAfraid()) {
+            } else if (this->p.getAfraid()) {
                 fullName += "--";
             }
             fullName += " [";
@@ -103,9 +103,9 @@ class Soldado {
             return dist(gen);
         }
         virtual void defender(double ataqueSofrido, Soldado& attacker) {
-            if((double)(rand() % 100)/100 > this->p.getPDesvio()) {
+            if ((double)(rand() % 100)/100 > this->p.getPDesvio()) {
                 double damage = ataqueSofrido * (1 - 0.5 * ((double)(rand() % 100)/100 < this->p.getPBloqueio()));
-                if(damage > this->saude/2) {
+                if (damage > this->saude/2) {
                     this->p.beAfraid();
                 }
                 this->saude -= damage;
@@ -113,11 +113,11 @@ class Soldado {
             } else {
                 std::cout << "Desvio!" << std::endl;
             }
-            if(this->saude <= 0) {
+            if (this->saude <= 0) {
                 std::cout << this->getNome() << " morreu... RIP" << std::endl;
                 this->dead = true;
             } else {
-                if((double)(rand() % 100)/100 < this->p.getPContraAtaque()) {
+                if ((double)(rand() % 100)/100 < this->p.getPContraAtaque()) {
                     std::cout << "Contra ataque!" << std::endl;
                     this->atacar(attacker);
                 }
@@ -125,9 +125,9 @@ class Soldado {
         }
         virtual void atacar(Soldado& other) {
             std::cout << this->getFullName() << " ataca " << other.getFullName() << std::endl;
-            if((double)(rand() % 100)/100 < this->p.getPAcertar()) {
+            if ((double)(rand() % 100)/100 < this->p.getPAcertar()) {
                 other.defender(this->poderAtaque * (1 + this->bonusAtaque * ((double)(rand() % 100)/100 <= this->p.getPBonus())), *this);
-                if((double)(rand() % 100)/100 <= this->p.getPDuplo() && !other.isDead()) {
+                if ((double)(rand() % 100)/100 <= this->p.getPDuplo() && !other.isDead()) {
                     std::cout << this->getFullName() << " ataca duplo!" << std::endl;
                     other.defender(this->poderAtaque * (1 + this->bonusAtaque * ((double)(rand() % 100)/100 <= this->p.getPBonus())), *this);
                     this->p.beConfident();
@@ -261,54 +261,54 @@ class Battle {
             int i = 0;
             std::vector<int> mustEraseBem, mustEraseMal;
             std::cout << std::endl << "********** Round " << r << " ***********" << std::endl << std::endl;
-            while(i < eBem.size() && i < eMal.size()) {
+            while (i < eBem.size() && i < eMal.size()) {
                 eBem[i].atacar(eMal[i]);
-                if(!eMal[i].isDead() && !eBem[i].isDead()) {
+                if (!eMal[i].isDead() && !eBem[i].isDead()) {
                     eMal[i].atacar(eBem[i]);
                 }
-                if(eBem[i].isDead()) {
+                if (eBem[i].isDead()) {
                     mustEraseBem.push_back(i);
                 } else {
                     eBem[i].resetWaitList();
                 }
-                if(eMal[i].isDead()) {
+                if (eMal[i].isDead()) {
                     mustEraseMal.push_back(i);
                 } else {
                     eMal[i].resetWaitList();
                 }
                 i++;
             }
-            if(i < eBem.size()) {
+            if (i < eBem.size()) {
                 eBem[i].incrementWaitList();
                 i++;
             }
-            if(i < eMal.size()) {
+            if (i < eMal.size()) {
                 eMal[i].incrementWaitList();
                 i++;
             }
             std::sort(mustEraseBem.rbegin(), mustEraseBem.rend());
             std::sort(mustEraseMal.rbegin(), mustEraseMal.rend());
-            for(int index : mustEraseBem) {
+            for (int index : mustEraseBem) {
                 eBem.erase(eBem.begin() + index);
             }
-            for(int index : mustEraseMal) {
+            for (int index : mustEraseMal) {
                 eMal.erase(eMal.begin() + index);
             }
         }
         void battle() {
             int r = 0;
-            while(!this->ended()) {
+            while (!this->ended()) {
                 this->round(r++);
                 char next = 'A';
-                while(next != 'C') {
+                while (next != 'C') {
                     std::cout << "Aperte C para continuar: ";
                     std::cin >> next;
                 }
             }
-            if(eBem.size()) {
+            if (eBem.size()) {
                 std::cout << "O Bem venceu!" << std::endl;
             } 
-            if(eMal.size()) {
+            if (eMal.size()) {
                 std::cout << "O Mal venceu!" << std::endl;
             }
         }
